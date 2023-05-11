@@ -6,13 +6,13 @@
 
 // running an accst v1 mode
 
-#define SBUS_RX 18
-#define SBUS_TX 19
+#define SBUS_RX 19
+#define SBUS_TX 18 // unused
 
 
 /* SBUS object, reading SBUS */
-bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, false);
-//bfs::SbusTx sbus_tx(&Serial2, SBUS_RX, SBUS_TX, false);
+bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
+
 /* SBUS data */
 bfs::SbusData data;
 
@@ -24,10 +24,8 @@ void setup() {
 
 
 
-  Serial2.begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert)
   /* Begin the SBUS communication */
   sbus_rx.Begin();
-  //sbus_tx.Begin();
 }
 
 void loop () {
@@ -43,9 +41,5 @@ void loop () {
     Serial.print(data.lost_frame);
     Serial.print("\t");
     Serial.println(data.failsafe);
-    /* Set the SBUS TX data to the received data */
-    //sbus_tx.data(data);
-    /* Write the data to the servos */
-    //sbus_tx.Write();
   }
 }
