@@ -12,11 +12,13 @@
 
 #define SPORT 17
 
+#define SPORT_LED 32
+
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
 
 
-FrskySP FrskySP(&Serial1);
+FrskySP FrskySP(&Serial1, SPORT);
 
 /* SBUS data */
 bfs::SbusData data;
@@ -32,35 +34,39 @@ void setup() {
     /* Begin the SBUS communication */
     sbus_rx.Begin();
 
-    Serial1.begin(57600, SERIAL_8N1, SPORT, 16, false);
-
-    //FrskySP.ledSet (SPORT_LED);
+    FrskySP.ledSet(SPORT_LED);
 }
 
+
 void loop () {
-    //if (sbus_rx.Read()) {
-    //    /* Grab the received data */
-    //    data = sbus_rx.data();
-    //    /* Display the received data */
-    //    for (int8_t i = 0; i < data.NUM_CH; i++) {
-    //        Serial.print(data.ch[i]);
-    //        Serial.print("\t");
-    //    }
-    //    /* Display lost frames and failsafe data */
-    //    Serial.print(data.lost_frame);
-    //    Serial.print("\t");
-    //    Serial.println(data.failsafe);
-    //}
+    if (sbus_rx.Read()) {
+        /* Grab the received data */
+        data = sbus_rx.data();
+        /* Display the received data */
+        for (int8_t i = 0; i < data.NUM_CH; i++) {
+            Serial.print(data.ch[i]);
+            Serial.print("\t");
+        }
+        /* Display lost frames and failsafe data */
+        Serial.print(data.lost_frame);
+        Serial.print("\t");
+        Serial.println(data.failsafe);
+    }
 
     // increment used when several values must be sent within the same physical ID - only one per cycle
     static unsigned int i[29] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     while (FrskySP.available ()) {
 
-        if (FrskySP.read() == 0x7E) {
+        uint8_t data = FrskySP.read();
+        if (data != 0x7E) {
+            if(data != 0x00) {
+                Serial.printf("got garbage: %02X\r\n", data);
+            }
+        } else {
             while (!FrskySP.available ());  // wait for the next byte
             uint8_t sensorRequest = FrskySP.read();
-            Serial.printf("sbus request for %02X\r\n", sensorRequest);
+            //Serial.printf("sbus request for %02X\r\n", sensorRequest);
             switch (sensorRequest) {
 
                 case 0x00:  // Physical ID 1 - Vario2 (altimeter high precision)
@@ -202,8 +208,6 @@ void loop () {
                     i[28]++;
                     break;
             }
-        } else {
-            Serial.println("got garbage");
         }
     }
 }
