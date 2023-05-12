@@ -17,6 +17,7 @@
 #define LED_R 33
 #define LED_G 25
 #define LED_B 26
+#define TEST_SW 27
 
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
@@ -34,9 +35,10 @@ void setup() {
     Serial.println("starting...");
 
 
-	pinMode (LED_R, OUTPUT);
-	pinMode (LED_G, OUTPUT);
-	pinMode (LED_B, OUTPUT);
+	pinMode(LED_R, OUTPUT);
+	pinMode(LED_G, OUTPUT);
+	pinMode(LED_B, OUTPUT);
+	pinMode(TEST_SW, INPUT_PULLUP);
 
     /* Begin the SBUS communication */
     sbus_rx.Begin();
@@ -92,9 +94,9 @@ void loop () {
                     if (i[2] % 6 == 2)  FrskySP.sendData (FRSKY_SP_CELLS, FrskySP.lipoCell (4, 3.54, 3.55));
 
                     // 2nd FLVSS by using logical ID + 1 - could use another physical ID as well
-                    if (i[3] % 6 == 3)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (0, 3.56, 3.57));
-                    if (i[3] % 6 == 4)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (2, 3.58, 3.59));
-                    if (i[3] % 6 == 5)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (4, 3.60, 3.61));
+                    if (i[2] % 6 == 3)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (0, 3.56, 3.57));
+                    if (i[2] % 6 == 4)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (2, 3.58, 3.59));
+                    if (i[2] % 6 == 5)  FrskySP.sendData (FRSKY_SP_CELLS+1, FrskySP.lipoCell (4, 3.60, 3.61));
 
                     i[2]++;
                     break;
@@ -113,7 +115,11 @@ void loop () {
                     break;
 
                 case 0xE4:  // Physical ID 5 - RPM
-                    FrskySP.sendData (FRSKY_SP_RPM, 11111);  // 11111 rpm
+                    if(digitalRead(TEST_SW)) {
+                        FrskySP.sendData (FRSKY_SP_RPM, 11111);  // 11111 rpm
+                    } else {
+                        FrskySP.sendData (FRSKY_SP_RPM, 22222);  // 11111 rpm
+                    }
                     i[5]++;
                     break;
 
