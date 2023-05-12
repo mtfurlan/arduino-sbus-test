@@ -14,6 +14,10 @@
 
 #define SPORT_LED 32
 
+#define LED_R 33
+#define LED_G 25
+#define LED_B 26
+
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
 
@@ -30,6 +34,9 @@ void setup() {
     Serial.println("starting...");
 
 
+	pinMode (LED_R, OUTPUT);
+	pinMode (LED_G, OUTPUT);
+	pinMode (LED_B, OUTPUT);
 
     /* Begin the SBUS communication */
     sbus_rx.Begin();
@@ -51,6 +58,10 @@ void loop () {
         Serial.print(data.lost_frame);
         Serial.print("\t");
         Serial.println(data.failsafe);
+
+        digitalWrite (LED_R, data.ch[0] > 500);
+        digitalWrite (LED_G, data.ch[3] > 1000);
+        digitalWrite (LED_B, data.ch[3] < 500);
     }
 
     // increment used when several values must be sent within the same physical ID - only one per cycle
