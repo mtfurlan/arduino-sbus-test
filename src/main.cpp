@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <sbus.h>
 #include <FrskySP.h>
+#include <Servo.h>
 // https://www.waveshare.com/img/devkit/accBoard/NodeMCU-32S/NodeMCU-32S-details-3.jpg
 
 
@@ -19,6 +20,15 @@
 #define LED_B 26
 #define TEST_SW 27
 
+
+Servo steering;
+Servo drive;
+
+#define MOTOR_PIN 16
+#define STEERING_PIN 4
+#define MOTOR_CHAN 0
+#define STEERING_CHAN 1
+
 /* SBUS object, reading SBUS */
 bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
 
@@ -34,11 +44,14 @@ void setup() {
     while (!Serial) {}
     Serial.println("starting...");
 
+    pinMode(LED_R, OUTPUT);
+    pinMode(LED_G, OUTPUT);
+    pinMode(LED_B, OUTPUT);
+    pinMode(TEST_SW, INPUT_PULLUP);
 
-	pinMode(LED_R, OUTPUT);
-	pinMode(LED_G, OUTPUT);
-	pinMode(LED_B, OUTPUT);
-	pinMode(TEST_SW, INPUT_PULLUP);
+
+    steering.attach(STEERING_PIN, STEERING_CHAN);
+    drive.attach(MOTOR_PIN, MOTOR_CHAN);
 
     /* Begin the SBUS communication */
     sbus_rx.Begin();
@@ -61,9 +74,19 @@ void loop () {
         Serial.print("\t");
         Serial.println(data.failsafe);
 
+        // channels are 172 - 1811
+        // steering range is in degrees
+
+
         digitalWrite (LED_R, data.ch[0] > 500);
         digitalWrite (LED_G, data.ch[3] > 1000);
         digitalWrite (LED_B, data.ch[3] < 500);
+        int degrees = map(data.ch[3], 172, 1811, 0, 180);
+        Serial.printf("degrees: %03d, zoom: ", degrees);
+        //steering.write(degrees);
+        int zoom = map(data.ch[0], 172, 1811, 0, 180);
+        //Serial.println(zoom);
+        drive.write(zoom);
     }
 
     // increment used when several values must be sent within the same physical ID - only one per cycle
