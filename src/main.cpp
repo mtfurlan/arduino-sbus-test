@@ -8,12 +8,12 @@
 
 // running an accst v1 mode
 
-#define SBUS_RX 19
-#define SBUS_TX 18 // unused
+#define SBUX_RX_PIN 19
+#define SBUX_TX_PIN -1 // the subs input is for backup receiver or something, not for us
 
-#define SPORT 17
+#define SPORT_PIN 18
 
-#define SPORT_LED 32
+#define SPORT_LED_PIN 32
 
 #define LED_R 33
 #define LED_G 25
@@ -24,16 +24,22 @@
 Servo steering;
 Servo drive;
 
-#define MOTOR_PIN 16
-#define STEERING_PIN 4
+#define MOTOR_PIN 5
+#define STEERING_PIN 17
+#define FR_WHEELTICK_PIN 17
+#define RL_WHEELTICK_PIN 16
+#define RIGHT_SENSOR_PIN 4
+#define LEFT_SENSOR_PIN 2
+
+
 #define MOTOR_CHAN 0
 #define STEERING_CHAN 1
 
 /* SBUS object, reading SBUS */
-bfs::SbusRx sbus_rx(&Serial2, SBUS_RX, SBUS_TX, true);
+bfs::SbusRx sbus_rx(&Serial2, SBUX_RX_PIN, SBUX_TX_PIN, true);
 
 
-FrskySP FrskySP(&Serial1, SPORT);
+FrskySP FrskySP(&Serial1, SPORT_PIN);
 
 /* SBUS data */
 bfs::SbusData data;
@@ -56,7 +62,7 @@ void setup() {
     /* Begin the SBUS communication */
     sbus_rx.Begin();
 
-    FrskySP.ledSet(SPORT_LED);
+    FrskySP.ledSet(SPORT_LED_PIN);
 }
 
 
