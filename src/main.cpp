@@ -26,10 +26,10 @@ Servo drive;
 
 #define MOTOR_PIN 5
 #define STEERING_PIN 17
-#define FR_WHEELTICK_PIN 17
-#define RL_WHEELTICK_PIN 16
-#define RIGHT_SENSOR_PIN 4
-#define LEFT_SENSOR_PIN 2
+#define FR_WHEELTICK_PIN 16
+#define RL_WHEELTICK_PIN 4
+#define RIGHT_SENSOR_PIN 15
+#define LEFT_SENSOR_PIN 13
 
 
 #define MOTOR_CHAN 0
@@ -44,6 +44,15 @@ FrskySP FrskySP(&Serial1, SPORT_PIN);
 /* SBUS data */
 bfs::SbusData data;
 
+uint32_t frCount = 0;
+uint32_t rlCount = 0;
+void IRAM_ATTR wheeltick_isr_fr() {
+    frCount++;
+}
+void IRAM_ATTR wheeltick_isr_rl() {
+    rlCount++;
+}
+
 void setup() {
     /* Serial to display data */
     Serial.begin(115200);
@@ -55,6 +64,15 @@ void setup() {
     pinMode(LED_B, OUTPUT);
     pinMode(TEST_SW, INPUT_PULLUP);
 
+    pinMode(FR_WHEELTICK_PIN, INPUT_PULLDOWN);
+    pinMode(RL_WHEELTICK_PIN, INPUT_PULLDOWN);
+    pinMode(LEFT_SENSOR_PIN, INPUT_PULLDOWN);
+    pinMode(RIGHT_SENSOR_PIN, INPUT_PULLDOWN);
+
+    attachInterrupt(FR_WHEELTICK_PIN, wheeltick_isr_fr, FALLING);
+    attachInterrupt(RL_WHEELTICK_PIN, wheeltick_isr_rl, FALLING);
+
+    digitalRead(FR_WHEELTICK_PIN);
 
     steering.attach(STEERING_PIN, STEERING_CHAN);
     drive.attach(MOTOR_PIN, MOTOR_CHAN);
@@ -67,18 +85,26 @@ void setup() {
 
 
 void loop () {
+    bool left = !digitalRead(LEFT_SENSOR_PIN);
+    bool right = !digitalRead(RIGHT_SENSOR_PIN);
+
+    bool fr = !digitalRead(FR_WHEELTICK_PIN);
+    bool rl = !digitalRead(RL_WHEELTICK_PIN);
+
+    Serial.printf("SENSOR: L: %d, R: %d FR: %d[%d], RL: %d[%d]\r\n", left, right, fr, frCount, rl, rlCount);
+
     if (sbus_rx.Read()) {
         /* Grab the received data */
         data = sbus_rx.data();
         /* Display the received data */
-        for (int8_t i = 0; i < data.NUM_CH; i++) {
-            Serial.print(data.ch[i]);
-            Serial.print("\t");
-        }
-        /* Display lost frames and failsafe data */
-        Serial.print(data.lost_frame);
-        Serial.print("\t");
-        Serial.println(data.failsafe);
+        //for (int8_t i = 0; i < data.NUM_CH; i++) {
+        //    Serial.print(data.ch[i]);
+        //    Serial.print("\t");
+        //}
+        ///* Display lost frames and failsafe data */
+        //Serial.print(data.lost_frame);
+        //Serial.print("\t");
+        //Serial.println(data.failsafe);
 
         // channels are 172 - 1811
         // steering range is in degrees
@@ -89,7 +115,7 @@ void loop () {
         digitalWrite (LED_B, data.ch[3] < 500);
         int degrees = map(data.ch[3], 172, 1811, 0, 180);
         int zoom = map(data.ch[0], 172, 1811, 0, 180);
-        Serial.printf("degrees: %03d, zoom: %03d\r\n", degrees, zoom);
+        //Serial.printf("degrees: %03d, zoom: %03d\r\n", degrees, zoom);
         steering.write(degrees);
         drive.write(zoom);
     }
@@ -143,11 +169,7 @@ void loop () {
                     break;
 
                 case 0xE4:  // Physical ID 5 - RPM
-                    if(digitalRead(TEST_SW)) {
-                        FrskySP.sendData (FRSKY_SP_RPM, 11111);  // 11111 rpm
-                    } else {
-                        FrskySP.sendData (FRSKY_SP_RPM, 22222);  // 11111 rpm
-                    }
+                    FrskySP.sendData (FRSKY_SP_RPM, frCount);
                     i[5]++;
                     break;
 
