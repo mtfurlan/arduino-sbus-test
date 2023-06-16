@@ -82,10 +82,9 @@ void loop () {
         digitalWrite (LED_G, data.ch[3] > 1000);
         digitalWrite (LED_B, data.ch[3] < 500);
         int degrees = map(data.ch[3], 172, 1811, 0, 180);
-        Serial.printf("degrees: %03d, zoom: ", degrees);
-        //steering.write(degrees);
         int zoom = map(data.ch[0], 172, 1811, 0, 180);
-        //Serial.println(zoom);
+        Serial.printf("degrees: %03d, zoom: %03d\r\n", degrees, zoom);
+        steering.write(degrees);
         drive.write(zoom);
     }
 
